@@ -89,7 +89,7 @@
 
     [self isLocationServicesEnabledWithCompletion:^(BOOL enabled) {
 
-        if (!weakSelf) {
+        if (!enabled) {
             return;
         }
 
