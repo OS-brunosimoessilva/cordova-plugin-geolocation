@@ -85,24 +85,30 @@
 
 - (void)startLocation:(BOOL)enableHighAccuracy
 {
+    __weak __typeof(self) weakSelf = self;
+
     [self isLocationServicesEnabledWithCompletion:^(BOOL enabled) {
-        
-        if (!enabled) {
-            [self returnLocationError:PERMISSIONDENIED withMessage:@"Location services are not enabled."];
+
+        if (!weakSelf) {
             return;
         }
 
-        if (![self isAuthorized]) {
+        if (!weakSelf) {
+            [weakSelf returnLocationError:PERMISSIONDENIED withMessage:@"Location services are not enabled."];
+            return;
+        }
+
+        if (![weakSelf isAuthorized]) {
             [self handleAuthorizationError];
             return;
         }
 
-        if ([self.locationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined) {
+        if ([weakSelf.locationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined) {
             [self requestLocationAuthorization:enableHighAccuracy];
             return;
         }
 
-        [self configureLocationUpdatesWithHighAccuracy:enableHighAccuracy];
+        [weakSelf configureLocationUpdatesWithHighAccuracy:enableHighAccuracy];
     }];
 }
 
