@@ -85,31 +85,24 @@
 
 - (void)startLocation:(BOOL)enableHighAccuracy
 {
-    __weak __typeof(self) weakSelf = self;
-
     [self isLocationServicesEnabledWithCompletion:^(BOOL enabled) {
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
         
-        if (!strongSelf) {
-            return;
-        }
-
         if (!enabled) {
-            [strongSelf returnLocationError:PERMISSIONDENIED withMessage:@"Location services are not enabled."];
+            [self returnLocationError:PERMISSIONDENIED withMessage:@"Location services are not enabled."];
             return;
         }
 
-        if (![strongSelf isAuthorized]) {
-            [strongSelf handleAuthorizationError];
+        if (![self isAuthorized]) {
+            [self handleAuthorizationError];
             return;
         }
 
-        if ([strongSelf.locationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined) {
-            [strongSelf requestLocationAuthorization:enableHighAccuracy];
+        if ([self.locationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined) {
+            [self requestLocationAuthorization:enableHighAccuracy];
             return;
         }
 
-        [strongSelf configureLocationUpdatesWithHighAccuracy:enableHighAccuracy];
+        [self configureLocationUpdatesWithHighAccuracy:enableHighAccuracy];
     }];
 }
 
@@ -281,7 +274,7 @@
 {
     NSString *timerId = [command argumentAtIndex:0];
 
-    if (self.locationData && self.locationData.watchCallbacks[timerId]) {
+    if (self.locationData && self.locationData.watchCallbacks && self.locationData.watchCallbacks[timerId]) {
         [self.locationData.watchCallbacks removeObjectForKey:timerId];
 
         if (self.locationData.watchCallbacks.count == 0) {
@@ -342,20 +335,6 @@
     [self.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
-- (void)returnLocationError:(NSUInteger)errorCode withMessage:(NSString *)message
-{
-    NSMutableDictionary *errorInfo = [NSMutableDictionary dictionaryWithCapacity:2];
-    errorInfo[@"code"] = @(errorCode);
-    errorInfo[@"message"] = message ?: @"";
-
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:errorInfo];
-
-    [self sendResultToCallbacks:result callbacks:self.locationData.locationCallbacks];
-    [self.locationData.locationCallbacks removeAllObjects];
-
-    [self sendResultToCallbacks:result callbacks:self.locationData.watchCallbacks.allValues];
-}
-
 - (void)sendResultToCallbacks:(CDVPluginResult *)result callbacks:(NSArray<NSString *> *)callbacks
 {
     for (NSString *callbackId in callbacks) {
@@ -363,13 +342,22 @@
     }
 }
 
-- (void)sendPluginResultError:(NSUInteger)errorCode callbackId:(NSString *)callbackId
-{
+- (CDVPluginResult *)generateErrorResultWithCode:(NSUInteger)errorCode message:(NSString *)message {
     NSMutableDictionary *errorInfo = [NSMutableDictionary dictionaryWithCapacity:2];
     errorInfo[@"code"] = @(errorCode);
-    errorInfo[@"message"] = @"";
+    errorInfo[@"message"] = message ?: @"";
+    return [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:errorInfo];
+}
 
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:errorInfo];
+- (void)returnLocationError:(NSUInteger)errorCode withMessage:(NSString *)message {
+    CDVPluginResult *result = [self generateErrorResultWithCode:errorCode message:message];
+    [self sendResultToCallbacks:result callbacks:self.locationData.locationCallbacks];
+    [self.locationData.locationCallbacks removeAllObjects];
+    [self sendResultToCallbacks:result callbacks:self.locationData.watchCallbacks.allValues];
+}
+
+- (void)sendPluginResultError:(NSUInteger)errorCode callbackId:(NSString *)callbackId {
+    CDVPluginResult *result = [self generateErrorResultWithCode:errorCode message:@""];
     [self.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
