@@ -66,5 +66,5 @@ typedef NSUInteger CDVLocationStatus;
 - (void)locationManager:(CLLocationManager*)manager
        didFailWithError:(NSError*)error;
 
-- (BOOL)isLocationServicesEnabled;
+- (void)isLocationServicesEnabledWithCompletion:(void (^)(BOOL enabled))completion;
 @end
