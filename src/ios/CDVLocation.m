@@ -89,7 +89,10 @@
 
     [self isLocationServicesEnabledWithCompletion:^(BOOL enabled) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
+        
+        if (!strongSelf) {
+            return;
+        }
 
         if (!enabled) {
             [strongSelf returnLocationError:PERMISSIONDENIED withMessage:@"Location services are not enabled."];
@@ -160,7 +163,6 @@
 
     [self.locationManager startUpdatingLocation];
 }
-
 
 - (void)_stopLocation
 {
@@ -303,7 +305,6 @@
     }
 }
 
-
 - (void)stopLocation:(CDVInvokedUrlCommand*)command
 {
     [self _stopLocation];
@@ -372,7 +373,6 @@
     [self.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
-
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
     NSLog(@"locationManager::didFailWithError: %@", error.localizedFailureReason ?: @"No failure reason provided");
@@ -393,7 +393,6 @@
         __locationStarted = NO;
     }
 }
-
 
 //iOS8+
 -(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
